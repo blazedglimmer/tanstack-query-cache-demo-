@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trash2, Database } from 'lucide-react';
 
-export function CacheInfo() {
+export const CacheInfo = () => {
   const queryClient = useQueryClient();
   const queryCache = queryClient.getQueryCache();
   const queries = queryCache.getAll();
@@ -82,4 +82,4 @@ export function CacheInfo() {
       </CardContent>
     </Card>
   );
-}
+};

@@ -31,7 +31,7 @@ function UserBadge({ userId }: { userId: number }) {
   return <Badge variant="secondary">{user?.name || 'Unknown'}</Badge>;
 }
 
-export function PostsList() {
+export const PostsList = () => {
   const mounted = useMounted();
   const {
     data: posts,
@@ -115,4 +115,4 @@ export function PostsList() {
       </div>
     </div>
   );
-}
+};
