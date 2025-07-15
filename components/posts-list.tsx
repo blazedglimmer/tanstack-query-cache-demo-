@@ -1,5 +1,6 @@
 'use client';
 
+import { useMounted } from '@/hooks/use-mounted';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPosts, fetchUser } from '@/lib/api';
 import {
@@ -31,6 +32,7 @@ function UserBadge({ userId }: { userId: number }) {
 }
 
 export function PostsList() {
+  const mounted = useMounted();
   const {
     data: posts,
     isLoading,
@@ -45,7 +47,9 @@ export function PostsList() {
     gcTime: 10 * 60 * 1000,
   });
 
-  const lastUpdated = new Date(dataUpdatedAt).toLocaleTimeString();
+  const lastUpdated = mounted
+    ? new Date(dataUpdatedAt).toLocaleTimeString()
+    : 'Loading...';
 
   if (error) {
     return (
