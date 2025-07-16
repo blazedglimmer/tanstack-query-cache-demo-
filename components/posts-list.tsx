@@ -1,6 +1,5 @@
 'use client';
 
-import { useMounted } from '@/hooks/use-mounted';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPosts, fetchUser } from '@/lib/api';
 import {
@@ -12,27 +11,39 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Clock, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Users } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { CacheStatusIndicator } from '@/components/cache-status-indicator';
 
-function UserBadge({ userId }: { userId: number }) {
-  const { data: user, isLoading } = useQuery({
+const UserBadge = ({ userId }: { userId: number }) => {
+  const {
+    data: user,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => fetchUser(userId),
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 10 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   if (isLoading) {
     return <Skeleton className="h-5 w-20" />;
   }
 
-  return <Badge variant="secondary">{user?.name || 'Unknown'}</Badge>;
-}
+  return (
+    <Badge variant="secondary" className="flex items-center gap-1">
+      {isFetching && (
+        <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse" />
+      )}
+      <Users className="h-3 w-3" />
+      {user?.name || 'Unknown'}
+    </Badge>
+  );
+};
 
-export const PostsList = () => {
-  const mounted = useMounted();
+export function PostsList() {
   const {
     data: posts,
     isLoading,
@@ -45,42 +56,47 @@ export const PostsList = () => {
     queryKey: ['posts'],
     queryFn: fetchPosts,
     staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000, // 15 minutes
   });
-
-  const lastUpdated =
-    mounted && dataUpdatedAt
-      ? new Date(dataUpdatedAt).toLocaleTimeString()
-      : 'Not loaded';
 
   if (error) {
     return (
-      <Alert variant="destructive" className="border-red-800 bg-red-950/50">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load posts. Please try again.
-        </AlertDescription>
-      </Alert>
+      <div>
+        <CacheStatusIndicator
+          isLoading={isLoading}
+          isFetching={isFetching}
+          isStale={isStale}
+          dataUpdatedAt={dataUpdatedAt}
+          error={error}
+        />
+        <Alert variant="destructive" className="border-red-800 bg-red-950/50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load posts. Please try again.
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <CacheStatusIndicator
+        isLoading={isLoading}
+        isFetching={isFetching}
+        isStale={isStale}
+        dataUpdatedAt={dataUpdatedAt}
+        error={error}
+      />
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
-            Last updated: {lastUpdated}
-          </span>
-          {isStale && (
-            <Badge variant="outline" className="text-xs">
-              Stale
-            </Badge>
-          )}
-          {!posts && !isLoading && (
-            <Badge variant="destructive" className="text-xs">
-              No Cache
-            </Badge>
+          <h3 className="text-lg font-semibold">Posts Data</h3>
+          {isFetching && (
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse" />
+              <span className="text-xs text-blue-500">Fetching...</span>
+            </div>
           )}
         </div>
         <Button
@@ -92,7 +108,7 @@ export const PostsList = () => {
           <RefreshCw
             className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`}
           />
-          {isFetching ? 'Refreshing...' : 'Refresh'}
+          {isFetching ? 'Refreshing...' : 'Force Refresh'}
         </Button>
       </div>
 
@@ -110,21 +126,31 @@ export const PostsList = () => {
                 </CardContent>
               </Card>
             ))
-          : posts?.slice(0, 10).map(post => (
-              <Card key={post.id}>
+          : posts?.slice(0, 8).map(post => (
+              <Card key={post.id} className="transition-all hover:shadow-md">
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">{post.title}</CardTitle>
+                    <CardTitle className="text-lg leading-tight">
+                      {post.title}
+                    </CardTitle>
                     <UserBadge userId={post.userId} />
                   </div>
                   <CardDescription>Post #{post.id}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">{post.body}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {post.body}
+                  </p>
                 </CardContent>
               </Card>
             ))}
       </div>
+
+      {posts && (
+        <div className="text-center text-sm text-muted-foreground">
+          Showing {Math.min(8, posts.length)} of {posts.length} posts
+        </div>
+      )}
     </div>
   );
-};
+}
