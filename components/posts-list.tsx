@@ -1,7 +1,8 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchPosts, fetchUser } from '@/lib/api';
+import type { Post } from '@/lib/api';
 import {
   Card,
   CardContent,
@@ -11,12 +12,16 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, RefreshCw, Users } from 'lucide-react';
+import { AlertCircle, RefreshCw, Users, RotateCcw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { CacheStatusIndicator } from '@/components/cache-status-indicator';
+import { CacheStatusIndicator } from './cache-status-indicator';
 
-const UserBadge = ({ userId }: { userId: number }) => {
+interface UserBadgeProps {
+  userId: number;
+}
+
+const UserBadge = ({ userId }: UserBadgeProps) => {
   const {
     data: user,
     isLoading,
@@ -43,7 +48,9 @@ const UserBadge = ({ userId }: { userId: number }) => {
   );
 };
 
-export function PostsList() {
+export const PostsList = () => {
+  const queryClient = useQueryClient();
+
   const {
     data: posts,
     isLoading,
@@ -58,6 +65,16 @@ export function PostsList() {
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
   });
+
+  // Function to invalidate and refetch (respects cache)
+  const handleSmartRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['posts'] });
+  };
+
+  // Function to force refetch (bypasses cache)
+  const handleForceRefresh = () => {
+    refetch();
+  };
 
   if (error) {
     return (
@@ -99,17 +116,53 @@ export function PostsList() {
             </div>
           )}
         </div>
-        <Button
-          onClick={() => refetch()}
-          disabled={isFetching}
-          variant="outline"
-          size="sm"
-        >
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`}
-          />
-          {isFetching ? 'Refreshing...' : 'Force Refresh'}
-        </Button>
+
+        <div className="flex gap-2">
+          <Button
+            onClick={handleSmartRefresh}
+            disabled={isFetching}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 bg-transparent"
+          >
+            <RotateCcw
+              className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`}
+            />
+            Smart Refresh
+          </Button>
+
+          <Button
+            onClick={handleForceRefresh}
+            disabled={isFetching}
+            variant="secondary"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`}
+            />
+            Force Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Explanation of button differences */}
+      <div className="text-xs bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+        <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+          Button Differences:
+        </p>
+        <p className="text-blue-700 dark:text-blue-300">
+          • <strong>Smart Refresh:</strong> Respects cache - only fetches if
+          data is stale ({'>'} 10 minutes old)
+        </p>
+        <p className="text-blue-700 dark:text-blue-300">
+          • <strong>Force Refresh:</strong> Always makes network call, ignoring
+          cache
+        </p>
+        <p className="text-blue-700 dark:text-blue-300 mt-1">
+          💡 <strong>Try this:</strong> Use Smart Refresh within 10 minutes - no
+          network call!
+        </p>
       </div>
 
       <div className="grid gap-4">
@@ -126,7 +179,7 @@ export function PostsList() {
                 </CardContent>
               </Card>
             ))
-          : posts?.slice(0, 8).map(post => (
+          : posts?.slice(0, 8).map((post: Post) => (
               <Card key={post.id} className="transition-all hover:shadow-md">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -153,4 +206,4 @@ export function PostsList() {
       )}
     </div>
   );
-}
+};
