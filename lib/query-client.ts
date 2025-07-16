@@ -5,7 +5,7 @@ import { QueryClient } from '@tanstack/react-query';
 // Create a stable QueryClient instance that won't be recreated
 let browserQueryClient: QueryClient | undefined = undefined;
 
-function makeQueryClient() {
+const makeQueryClient = (): QueryClient => {
   return new QueryClient({
     defaultOptions: {
       queries: {
@@ -19,9 +19,9 @@ function makeQueryClient() {
       },
     },
   });
-}
+};
 
-export function getQueryClient() {
+export const getQueryClient = (): QueryClient => {
   // Server: always make a new query client
   if (typeof window === 'undefined') {
     return makeQueryClient();
@@ -33,4 +33,4 @@ export function getQueryClient() {
   }
 
   return browserQueryClient;
-}
+};
