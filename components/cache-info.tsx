@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQueryClient, Query } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import type { Query } from '@tanstack/react-query';
 import {
   Card,
   CardContent,
@@ -13,16 +14,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Trash2, Database, CheckCircle, Info } from 'lucide-react';
 
-interface BadgeProps {
-  variant: 'default' | 'secondary' | 'outline' | 'destructive';
-  children: React.ReactNode;
-}
+type BadgeVariant = 'default' | 'secondary' | 'outline' | 'destructive';
 
 export const CacheInfo = () => {
   const queryClient = useQueryClient();
   const [isClearing, setIsClearing] = useState(false);
   const [justCleared, setJustCleared] = useState(false);
-  const [queries, setQueries] = useState(() =>
+  const [queries, setQueries] = useState<Query[]>(() =>
     queryClient.getQueryCache().getAll()
   );
 
@@ -36,7 +34,7 @@ export const CacheInfo = () => {
     return () => clearInterval(interval);
   }, [queryClient]);
 
-  const clearCache = async () => {
+  const clearCache = async (): Promise<void> => {
     setIsClearing(true);
     queryClient.clear();
     setQueries([]);
@@ -48,7 +46,7 @@ export const CacheInfo = () => {
     }, 2000);
   };
 
-  const getQueryAge = (query: Query) => {
+  const getQueryAge = (query: Query): string => {
     if (!query.state.dataUpdatedAt) return 'Never';
     const ageMs = Date.now() - query.state.dataUpdatedAt;
     const ageMinutes = Math.floor(ageMs / 60000);
@@ -58,7 +56,7 @@ export const CacheInfo = () => {
     return `${ageSeconds}s`;
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): BadgeVariant => {
     switch (status) {
       case 'success':
         return 'default';
@@ -166,16 +164,10 @@ export const CacheInfo = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-2">
-                      <Badge
-                        variant={
-                          getStatusColor(
-                            query.state.status
-                          ) as BadgeProps['variant']
-                        }
-                      >
+                      <Badge variant={getStatusColor(query.state.status)}>
                         {query.state.status}
                       </Badge>
-                      {query.state.status === 'pending' && (
+                      {query.state.isStale && (
                         <Badge variant="outline" className="text-xs">
                           Stale
                         </Badge>
