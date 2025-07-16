@@ -40,6 +40,7 @@ export const PostsList = () => {
     refetch,
     isFetching,
     dataUpdatedAt,
+    isStale,
   } = useQuery({
     queryKey: ['posts'],
     queryFn: fetchPosts,
@@ -47,9 +48,10 @@ export const PostsList = () => {
     gcTime: 10 * 60 * 1000,
   });
 
-  const lastUpdated = mounted
-    ? new Date(dataUpdatedAt).toLocaleTimeString()
-    : 'Loading...';
+  const lastUpdated =
+    mounted && dataUpdatedAt
+      ? new Date(dataUpdatedAt).toLocaleTimeString()
+      : 'Not loaded';
 
   if (error) {
     return (
@@ -70,6 +72,16 @@ export const PostsList = () => {
           <span className="text-sm text-muted-foreground">
             Last updated: {lastUpdated}
           </span>
+          {isStale && (
+            <Badge variant="outline" className="text-xs">
+              Stale
+            </Badge>
+          )}
+          {!posts && !isLoading && (
+            <Badge variant="destructive" className="text-xs">
+              No Cache
+            </Badge>
+          )}
         </div>
         <Button
           onClick={() => refetch()}

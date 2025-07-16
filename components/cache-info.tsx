@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Card,
@@ -10,15 +11,43 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2, Database } from 'lucide-react';
+import { Trash2, Database, CheckCircle } from 'lucide-react';
 
 export const CacheInfo = () => {
   const queryClient = useQueryClient();
-  const queryCache = queryClient.getQueryCache();
-  const queries = queryCache.getAll();
+  const [isClearing, setIsClearing] = useState(false);
+  const [justCleared, setJustCleared] = useState(false);
+  const [queries, setQueries] = useState(() =>
+    queryClient.getQueryCache().getAll()
+  );
 
-  const clearCache = () => {
+  // Update queries list periodically to reflect cache changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentQueries = queryClient.getQueryCache().getAll();
+      setQueries(currentQueries);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [queryClient]);
+
+  const clearCache = async () => {
+    setIsClearing(true);
+
+    // Clear the cache
     queryClient.clear();
+
+    // Update the queries list immediately
+    setQueries([]);
+
+    // Show success feedback
+    setJustCleared(true);
+
+    // Reset states after a delay
+    setTimeout(() => {
+      setIsClearing(false);
+      setJustCleared(false);
+    }, 2000);
   };
 
   return (
@@ -34,22 +63,56 @@ export const CacheInfo = () => {
               TanStack Query cache status and controls
             </CardDescription>
           </div>
-          <Button onClick={clearCache} variant="outline" size="sm">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear Cache
+          <Button
+            onClick={clearCache}
+            variant={justCleared ? 'default' : 'outline'}
+            size="sm"
+            disabled={isClearing}
+            className={justCleared ? 'bg-green-600 hover:bg-green-700' : ''}
+          >
+            {justCleared ? (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Cleared!
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2" />
+                {isClearing ? 'Clearing...' : 'Clear Cache'}
+              </>
+            )}
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Active Queries:</span>
-          <Badge variant="secondary">{queries.length}</Badge>
+          <Badge
+            variant="secondary"
+            className={
+              queries.length === 0
+                ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                : ''
+            }
+          >
+            {queries.length}
+          </Badge>
+          {queries.length === 0 && (
+            <span className="text-xs text-muted-foreground">
+              (Cache is empty)
+            </span>
+          )}
         </div>
 
         <div className="space-y-2">
           <span className="text-sm font-medium">Cached Queries:</span>
           {queries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No queries cached</p>
+            <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded border border-dashed">
+              <p className="text-center">No queries cached</p>
+              <p className="text-xs text-center mt-1">
+                {justCleared ? 'Cache successfully cleared!' : 'Cache is empty'}
+              </p>
+            </div>
           ) : (
             <div className="space-y-1">
               {queries.map((query, index) => (
