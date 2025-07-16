@@ -13,9 +13,12 @@ interface CacheStatusProps {
   error: unknown;
 }
 
-interface BadgeProps {
-  variant: 'default' | 'secondary' | 'outline' | 'destructive';
-  children: React.ReactNode;
+type BadgeVariant = 'default' | 'secondary' | 'outline' | 'destructive';
+
+interface StatusInfo {
+  text: string;
+  color: BadgeVariant;
+  icon: typeof Wifi;
 }
 
 export const CacheStatusIndicator = ({
@@ -31,7 +34,7 @@ export const CacheStatusIndicator = ({
     setMounted(true);
   }, []);
 
-  const getStatus = () => {
+  const getStatus = (): StatusInfo => {
     if (error) return { text: 'Error', color: 'destructive', icon: WifiOff };
     if (isLoading)
       return { text: 'Initial Load', color: 'secondary', icon: Wifi };
@@ -49,7 +52,7 @@ export const CacheStatusIndicator = ({
       ? Math.floor((Date.now() - dataUpdatedAt) / 1000)
       : 0;
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s ago`;
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m ago`;
@@ -68,10 +71,7 @@ export const CacheStatusIndicator = ({
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Data Source:</span>
-          <Badge
-            variant={status.color as BadgeProps['variant']}
-            className="flex items-center gap-1"
-          >
+          <Badge variant={status.color} className="flex items-center gap-1">
             <Icon className="h-3 w-3" />
             {status.text}
           </Badge>
