@@ -59,14 +59,14 @@ export const TanStackExplainer = () => {
           <div className="flex items-start gap-3">
             <Lightbulb className="h-5 w-5 text-yellow-500 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-sm">Try This:</h4>
+              <h4 className="font-semibold text-sm">Test Caching:</h4>
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>1. Refresh the page - notice the loading state</p>
+                <p>1. Refresh browser page - notice initial loading</p>
                 <p>
-                  2. Refresh again within 10 minutes - data loads instantly from
-                  cache!
+                  2. Refresh again within 10 minutes - instant load from cache!
                 </p>
-                <p>3. Clear cache and see the difference</p>
+                <p>{`3. Use "Smart Refresh" - respects cache timing`}</p>
+                <p>{`4. Use "Force Refresh" - always makes network call`}</p>
               </div>
             </div>
           </div>
