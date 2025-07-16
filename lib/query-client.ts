@@ -2,15 +2,35 @@
 
 import { QueryClient } from '@tanstack/react-query';
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Cache for 10 minutes (600,000 milliseconds)
-      staleTime: 10 * 60 * 1000,
-      gcTime: 10 * 60 * 1000, // Garbage collection time (formerly cacheTime)
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
+// Create a stable QueryClient instance that won't be recreated
+let browserQueryClient: QueryClient | undefined = undefined;
+
+function makeQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Cache for 10 minutes (600,000 milliseconds)
+        staleTime: 10 * 60 * 1000, // Data stays fresh for 10 minutes
+        gcTime: 15 * 60 * 1000, // Keep in cache for 15 minutes (longer than staleTime)
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        retry: 1,
+      },
     },
-  },
-});
+  });
+}
+
+export function getQueryClient() {
+  // Server: always make a new query client
+  if (typeof window === 'undefined') {
+    return makeQueryClient();
+  }
+
+  // Browser: make a new query client if we don't already have one
+  if (!browserQueryClient) {
+    browserQueryClient = makeQueryClient();
+  }
+
+  return browserQueryClient;
+}
