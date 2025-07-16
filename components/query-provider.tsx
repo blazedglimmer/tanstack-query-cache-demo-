@@ -4,7 +4,11 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { getQueryClient } from '@/lib/query-client';
 
-export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
+interface QueryProviderProps {
+  children: React.ReactNode;
+}
+
+export const QueryProvider = ({ children }: QueryProviderProps) => {
   const queryClient = getQueryClient();
 
   return (
