@@ -8,8 +8,7 @@ import { Wifi, WifiOff, Clock, Database, Zap } from 'lucide-react';
 interface CacheStatusProps {
   isLoading: boolean;
   isFetching: boolean;
-  isStale: boolean;
-  dataUpdatedAt: number;
+  dataUpdatedAt: number | undefined;
   error: unknown;
 }
 
@@ -24,11 +23,15 @@ interface StatusInfo {
 export const CacheStatusIndicator = ({
   isLoading,
   isFetching,
-  isStale,
   dataUpdatedAt,
   error,
 }: CacheStatusProps) => {
   const [mounted, setMounted] = useState(false);
+
+  // Calculate if data is stale (older than 10 minutes)
+  const isStale = dataUpdatedAt
+    ? Date.now() - dataUpdatedAt > 10 * 60 * 1000
+    : true;
 
   useEffect(() => {
     setMounted(true);
@@ -40,8 +43,8 @@ export const CacheStatusIndicator = ({
       return { text: 'Initial Load', color: 'secondary', icon: Wifi };
     if (isFetching) return { text: 'Refetching', color: 'default', icon: Wifi };
     if (isStale)
-      return { text: 'Stale (Cache)', color: 'outline', icon: Clock };
-    return { text: 'Fresh (Cache)', color: 'default', icon: Zap };
+      return { text: 'Stale (>10min)', color: 'outline', icon: Clock };
+    return { text: 'Fresh (<10min)', color: 'default', icon: Zap };
   };
 
   const status = getStatus();
@@ -77,7 +80,7 @@ export const CacheStatusIndicator = ({
           </Badge>
         </div>
 
-        {mounted && dataUpdatedAt > 0 && (
+        {mounted && dataUpdatedAt && dataUpdatedAt > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Last Fetched:</span>
             <span className="text-sm text-muted-foreground">
@@ -88,8 +91,12 @@ export const CacheStatusIndicator = ({
 
         <div className="text-xs bg-muted/50 p-2 rounded space-y-1">
           <div className="flex justify-between">
-            <span>Cache Duration:</span>
+            <span>Fresh Duration:</span>
             <span className="font-mono">10 minutes</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Cache Expiry:</span>
+            <span className="font-mono">15 minutes</span>
           </div>
           <div className="flex justify-between">
             <span>Network Calls:</span>
