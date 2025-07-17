@@ -16,6 +16,9 @@ const makeQueryClient = (): QueryClient => {
         refetchOnMount: false,
         refetchOnReconnect: false,
         retry: 1,
+        // Below keys for better caching behavior
+        refetchInterval: false,
+        refetchIntervalInBackground: false,
       },
     },
   });
@@ -28,6 +31,7 @@ export const getQueryClient = (): QueryClient => {
   }
 
   // Browser: make a new query client if we don't already have one
+  // This ensures we reuse the same client instance
   if (!browserQueryClient) {
     browserQueryClient = makeQueryClient();
   }
